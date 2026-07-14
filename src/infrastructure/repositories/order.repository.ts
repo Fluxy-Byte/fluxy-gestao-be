@@ -74,6 +74,20 @@ export const orderRepository: OrderRepository = {
         });
     },
 
+    findByNumber(userId, numberOrder) {
+        return prisma.order.findUnique({
+            where: { userId_numberOrder: { userId, numberOrder } },
+            include: {
+                client: true,
+                orderItems: { include: { service: { select: { name: true } } } },
+            },
+        }).then((order) => {
+            if (!order || order.deletedAt) return null;
+            const { orderItems, ...rest } = order;
+            return { ...rest, items: orderItems } as any;
+        });
+    },
+
     findByDateRange(userId, start, end, status) {
         return prisma.order.findMany({
             where: {

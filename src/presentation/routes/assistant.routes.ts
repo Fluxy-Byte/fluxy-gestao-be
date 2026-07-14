@@ -9,8 +9,11 @@ assistantRoutes.get("/users/:userId", asyncHandler(assistantController.profile))
 assistantRoutes.get("/users/:userId/dashboard", asyncHandler(assistantController.dashboard));
 assistantRoutes.get("/users/:userId/report", asyncHandler(assistantController.report));
 assistantRoutes.get("/users/:userId/clients", asyncHandler(assistantController.searchClients));
+assistantRoutes.get("/users/:userId/clients/all", asyncHandler(assistantController.listClients));
 assistantRoutes.get("/users/:userId/clients/:clientId/orders", asyncHandler(assistantController.ordersByClient));
 assistantRoutes.get("/users/:userId/clients/:clientId/link", asyncHandler(assistantController.clientLink));
+assistantRoutes.get("/users/:userId/services", asyncHandler(assistantController.listServices));
+assistantRoutes.get("/users/:userId/orders/:numberOrder", asyncHandler(assistantController.orderByNumber));
 assistantRoutes.get("/users/:userId/debts", asyncHandler(assistantController.debts));
 assistantRoutes.get("/users/:userId/expenses", asyncHandler(assistantController.expenses));
 assistantRoutes.get("/users/:userId/financial-report", asyncHandler(assistantController.financialReport));

@@ -43,6 +43,7 @@ export interface OrderRepository {
     findReceivableByUser(userId: string): Promise<OrderWithClientName[]>;
     findByClientId(userId: string, clientId: string): Promise<OrderWithItems[]>;
     findDetailById(id: string, userId: string): Promise<OrderDetail | null>;
+    findByNumber(userId: string, numberOrder: bigint): Promise<OrderDetail | null>;
     findByDateRange(userId: string, start: Date, end: Date, status?: OrderStatus): Promise<Order[]>;
     findItemsByDateRange(userId: string, start: Date, end: Date, status?: OrderStatus): Promise<OrderItemWithServiceName[]>;
     // Faturamento/custo do relatório precisam do dinheiro recebido DENTRO do período —

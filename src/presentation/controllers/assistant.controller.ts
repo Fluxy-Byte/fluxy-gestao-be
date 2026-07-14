@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { userRepository } from "../../infrastructure/repositories/user.repository";
 import { clientRepository } from "../../infrastructure/repositories/client.repository";
 import { orderRepository } from "../../infrastructure/repositories/order.repository";
+import { serviceRepository } from "../../infrastructure/repositories/service.repository";
 import { debtRepository } from "../../infrastructure/repositories/debt.repository";
 import { expenseRepository } from "../../infrastructure/repositories/expense.repository";
 import { invoiceRepository } from "../../infrastructure/repositories/invoice.repository";
@@ -11,9 +12,12 @@ import { cashMovementRepository } from "../../infrastructure/repositories/cash-m
 import { findUserByPhoneUsecase } from "../../application/usecases/assistant/find-user-by-phone.usecase";
 import { findClientByNameUsecase } from "../../application/usecases/assistant/find-client-by-name.usecase";
 import { getUserInvoiceUsecase } from "../../application/usecases/assistant/get-user-invoice.usecase";
+import { getOrderByNumberUsecase } from "../../application/usecases/assistant/get-order-by-number.usecase";
 import { getDashboardUsecase } from "../../application/usecases/order/get-dashboard.usecase";
 import { getReportUsecase } from "../../application/usecases/order/get-report.usecase";
 import { listOrdersByClientUsecase } from "../../application/usecases/order/list-orders.usecase";
+import { listActiveServicesUsecase } from "../../application/usecases/service/list-services.usecase";
+import { listClientsUsecase } from "../../application/usecases/client/list-clients.usecase";
 import { listDebtsUsecase } from "../../application/usecases/debt/list-debts.usecase";
 import { listExpensesUsecase } from "../../application/usecases/expense/list-expenses.usecase";
 import { getFinancialReportUsecase } from "../../application/usecases/expense/get-financial-report.usecase";
@@ -77,9 +81,29 @@ export const assistantController = {
         res.json(serialize(clients));
     },
 
+    async listClients(req: Request, res: Response) {
+        const clients = await listClientsUsecase(clientRepository, req.params.userId as string);
+        res.json(serialize(clients));
+    },
+
+    async listServices(req: Request, res: Response) {
+        const services = await listActiveServicesUsecase(serviceRepository, req.params.userId as string);
+        res.json(serialize(services));
+    },
+
     async ordersByClient(req: Request, res: Response) {
         const orders = await listOrdersByClientUsecase(orderRepository, req.params.userId as string, req.params.clientId as string);
         res.json(serialize(orders));
+    },
+
+    async orderByNumber(req: Request, res: Response) {
+        const numberOrder = BigInt(req.params.numberOrder as string);
+        const order = await getOrderByNumberUsecase(orderRepository, req.params.userId as string, numberOrder);
+        if (!order) {
+            res.status(404).json({ error: "Ordem de serviço não encontrada." });
+            return;
+        }
+        res.json(serialize(order));
     },
 
     async clientLink(req: Request, res: Response) {
