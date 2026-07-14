@@ -30,6 +30,11 @@ export interface UpdateBrandInput {
 
 export interface UserRepository {
     findById(id: string): Promise<User | null>;
+    // Usado pelo assistente do WhatsApp (Fly) para identificar o usuário pelo número
+    // que enviou a mensagem. `phone` não é @unique nem indexado, e o formato salvo no
+    // perfil pode ter máscara diferente do wa_id do WhatsApp — a comparação é feita por
+    // dígitos normalizados (últimos 11), não por igualdade exata de string.
+    findByPhone(phone: string): Promise<User | null>;
     updateProfile(id: string, data: UpdateProfileInput): Promise<User>;
     updateCompany(id: string, data: UpdateCompanyInput): Promise<User>;
     updateBrand(id: string, data: UpdateBrandInput): Promise<User>;

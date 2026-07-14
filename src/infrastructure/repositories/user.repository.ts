@@ -1,9 +1,21 @@
 import { prisma } from "../database/prisma";
 import type { UserRepository } from "../../domain/repository/user.repository";
 
+function normalizePhone(phone: string): string {
+    return phone.replace(/\D/g, "").slice(-11);
+}
+
 export const userRepository: UserRepository = {
     findById(id) {
         return prisma.user.findUnique({ where: { id } });
+    },
+
+    async findByPhone(phone) {
+        const target = normalizePhone(phone);
+        if (!target) return null;
+
+        const candidates = await prisma.user.findMany({ where: { phone: { not: null } } });
+        return candidates.find((u) => normalizePhone(u.phone as string) === target) ?? null;
     },
 
     updateProfile(id, data) {

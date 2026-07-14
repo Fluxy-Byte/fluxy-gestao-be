@@ -4,6 +4,7 @@ import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./src/infrastructure/auth/auth";
 import { requireActiveBilling, requireAdmin, requireAuth, requireDiamante } from "./src/infrastructure/auth/require-auth.middleware";
+import { requireInternalService } from "./src/infrastructure/auth/require-internal-service.middleware";
 import { clientRoutes } from "./src/presentation/routes/client.routes";
 import { serviceRoutes } from "./src/presentation/routes/service.routes";
 import { orderRoutes } from "./src/presentation/routes/order.routes";
@@ -13,6 +14,7 @@ import { publicRoutes } from "./src/presentation/routes/public.routes";
 import { expenseRoutes } from "./src/presentation/routes/expense.routes";
 import { debtRoutes } from "./src/presentation/routes/debt.routes";
 import { billingRoutes } from "./src/presentation/routes/billing.routes";
+import { assistantRoutes } from "./src/presentation/routes/assistant.routes";
 import { errorHandler } from "./src/presentation/error-handler";
 import { scheduleDailyCashReconciliation } from "./src/infrastructure/jobs/daily-cash-reconciliation.job";
 import { scheduleDailyBilling } from "./src/infrastructure/jobs/daily-billing.job";
@@ -43,6 +45,7 @@ app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
 app.use("/api/expenses", requireAuth, requireActiveBilling, requireDiamante, expenseRoutes);
 app.use("/api/debts", requireAuth, requireActiveBilling, requireDiamante, debtRoutes);
 app.use("/api/billing", requireAuth, billingRoutes);
+app.use("/api/internal/assistant", requireInternalService, assistantRoutes);
 
 app.use(errorHandler);
 
