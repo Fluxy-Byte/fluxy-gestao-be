@@ -1,0 +1,428 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===================== Better Auth core =====================
+// Shape follows Better Auth's Prisma generator + the "admin" plugin
+// (role / banned / banReason / banExpires / impersonatedBy).
+// Business/profile fields are appended directly onto User: this app
+// treats "account" and "company profile" as the same row (1:1), same
+// as the old Supabase `profiles` table keyed by auth.users.id.
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // admin plugin
+  role       String    @default("user")
+  banned     Boolean   @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  // client contract level — gates diamante-only features (expenses, financial report).
+  // Independent from `role`: admins get full access regardless of plan.
+  plan String @default("plus")
+
+  // company/profile fields (was `profiles` table)
+  phone            String?
+  avatarUrl        String?
+  theme            String  @default("light")
+  companyName      String?
+  cnpj             String?
+  cpf              String?
+  cep              String?
+  address          String?
+  addressNumber    String?
+  complement       String?
+  neighborhood     String?
+  city             String?
+  state            String?
+  logoUrl          String?
+  primaryColor     String  @default("#8c52ff")
+  pdfColor         String  @default("#8c52ff")
+  includeLogoInPdf Boolean @default(true)
+  orderSequence    BigInt  @default(0)
+
+  // Saldo de caixa informado pelo usuário; ajustado pelo job de conciliação (soma o
+  // faturamento das OS finalizadas e subtrai a saída de caixa desde a última
+  // reconciliação — ver reconcileUserCash). cashReconciledAt é o timestamp exato da
+  // última reconciliação (não um dia), para o botão manual poder rodar a qualquer
+  // hora — inclusive mais de uma vez no mesmo dia — sem contar nada em duplicidade.
+  currentCash      Decimal   @default(0) @db.Decimal(14, 2)
+  cashReconciledAt DateTime?
+
+  // Cobrança da assinatura Fluxy (billing da plataforma, não confundir com Debt/Expense
+  // do próprio tenant). asaasCustomerId é preenchido na primeira fatura gerada e reusado
+  // depois. billingBlocked é setado pelo job diário quando a fatura do mês anterior vence
+  // sem pagamento — distinto de `banned` (que é o ban administrativo do plugin admin do
+  // Better Auth) para não misturar as duas causas de bloqueio.
+  asaasCustomerId String?
+  billingBlocked  Boolean @default(false)
+
+  sessions Session[]
+  accounts Account[]
+
+  clients    Client[]
+  services   Service[]
+  orders     Order[]
+  orderItems OrderItem[]
+  auditLogs     AuditLog[]
+  expenses      Expense[]
+  debts         Debt[]
+  invoices      Invoice[]
+  cashMovements CashMovement[]
+
+  @@map("user")
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  impersonatedBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verification")
+}
+
+// ===================== Business tables =====================
+// Single-tenant-per-user model: every row is scoped by userId,
+// mirroring the RLS policies from the old Supabase schema
+// (clients_all / services_all / orders_all / oi_all "user_id = auth.uid()").
+
+model Client {
+  id            String    @id @default(cuid())
+  userId        String
+  name          String
+  email         String?
+  phone         String?
+  cep           String?
+  address       String?
+  addressNumber String?
+  complement    String?
+  neighborhood  String?
+  city          String?
+  state         String?
+  cpf           String?
+  cnpj          String?
+  laborRate     Decimal   @default(0) @db.Decimal(6, 2)
+  discount      Decimal   @default(0) @db.Decimal(6, 2)
+  increase      Decimal   @default(0) @db.Decimal(6, 2)
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@map("client")
+}
+
+model Service {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  category    String?
+  costPrice   Decimal   @default(0) @db.Decimal(14, 2)
+  salePrice   Decimal   @default(0) @db.Decimal(14, 2)
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([userId])
+  @@map("service")
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  OVERDUE
+}
+
+model Order {
+  id             String        @id @default(cuid())
+  userId         String
+  clientId       String
+  numberOrder    BigInt
+  statusOrder    OrderStatus   @default(PENDING)
+  paymentStatus  PaymentStatus @default(PENDING)
+  paymentMethod  String?
+  paymentDueDate DateTime?
+  amountPaid     Decimal       @default(0) @db.Decimal(14, 2)
+  // Quando o pagamento (total ou parcial) foi de fato lançado — distinto de completedAt
+  // (quando a OS foi marcada como concluída). Uma OS pode ser concluída num dia e só
+  // receber o pagamento (ou um pagamento parcial adicional) dias depois; faturamento e
+  // conciliação de caixa usam esta data, não completedAt, para saber em que período o
+  // dinheiro efetivamente entrou (ver update-payment-status.usecase.ts).
+  lastPaymentAt  DateTime?
+  // Quanto do valor em caixa desta OS (ver cashRevenue em domain/order-cash.ts) já foi
+  // somado ao currentCash do usuário pela conciliação de caixa. Substitui uma janela de
+  // tempo (que "perderia" para sempre um pagamento lançado com atraso, ver
+  // daily-cash-reconciliation.job.ts): a cada rodada só soma-se a diferença entre o valor
+  // atual e o que já foi contado, então o botão "Atualizar Caixa atual" pode ser clicado
+  // quantas vezes quiser, sem qualquer limite de uma vez por dia.
+  cashCountedAmount Decimal    @default(0) @db.Decimal(14, 2)
+  entryDate      DateTime      @default(now())
+  deliveryDate   DateTime?
+  completedAt    DateTime?
+  canceledAt     DateTime?
+  cancelReason   String?
+  notes          String?
+  totalCost      Decimal       @default(0) @db.Decimal(14, 2)
+  totalSale      Decimal       @default(0) @db.Decimal(14, 2)
+  createdBy      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client     Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  orderItems OrderItem[]
+
+  @@unique([userId, numberOrder])
+  @@index([userId])
+  @@index([clientId])
+  @@index([entryDate])
+  @@index([statusOrder])
+  @@map("order")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  serviceId  String
+  userId     String
+  costPrice  Decimal  @db.Decimal(14, 2)
+  salePrice  Decimal  @db.Decimal(14, 2)
+  discount   Decimal  @default(0) @db.Decimal(6, 2)
+  increase   Decimal  @default(0) @db.Decimal(6, 2)
+  quantity   Decimal  @default(1) @db.Decimal(14, 3)
+  finalPrice Decimal  @db.Decimal(14, 2)
+  createdAt  DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_item")
+}
+
+// ===================== Diamante features =====================
+// Company expenses (diamante+ only). Recurring expenses are stored as a single
+// template row (isRecurring=true, recurrenceFrequency set) and expanded into
+// virtual occurrences on the fly by the financial-report/list usecases for
+// whatever date range is requested — no background job pre-generates rows.
+
+enum RecurrenceFrequency {
+  MONTHLY
+}
+
+enum ExpenseStatus {
+  PENDING
+  PAID
+}
+
+model Expense {
+  id                  String               @id @default(cuid())
+  userId              String
+  description         String
+  amount              Decimal              @db.Decimal(14, 2)
+  category            String?
+  date                DateTime
+  status              ExpenseStatus        @default(PENDING)
+  isRecurring         Boolean              @default(false)
+  recurrenceFrequency RecurrenceFrequency?
+  recurrenceEndDate   DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  deletedAt           DateTime?
+
+  // Watermark próprio desta despesa para a conciliação de caixa (ver reconcileUserCash):
+  // instante até o qual as ocorrências já pagas desta despesa já foram somadas ao
+  // currentCash. Substitui uma janela global por dia (que "perdia" para sempre uma
+  // despesa lançada no mesmo dia de uma reconciliação anterior) pelo mesmo padrão já
+  // usado em Order.cashCountedAmount — idempotente e sem depender de fronteira de dia.
+  cashCountedUntil DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@map("expense")
+}
+
+// Dívidas da empresa (diamante+ only). Pagamento funciona como nas OS: pode ser
+// quitado integralmente ou parcialmente (amountPaid + paymentStatus, mesmo enum
+// PaymentStatus usado em Order).
+model Debt {
+  id            String        @id @default(cuid())
+  userId        String
+  description   String
+  amount        Decimal       @db.Decimal(14, 2)
+  amountPaid    Decimal       @default(0) @db.Decimal(14, 2)
+  paymentStatus PaymentStatus @default(PENDING)
+  category      String?
+  date          DateTime
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@map("debt")
+}
+
+// Registro de cada entrada/saída aplicada ao currentCash pela conciliação de caixa
+// (job diário ou botão "Atualizar Caixa atual") — ver daily-cash-reconciliation.job.ts.
+// Cada OS/despesa que contribui para uma rodada de conciliação gera sua própria linha,
+// para dar rastreabilidade total de "de onde veio" cada ajuste de caixa.
+enum CashMovementType {
+  IN
+  OUT
+}
+
+model CashMovement {
+  id          String           @id @default(cuid())
+  userId      String
+  type        CashMovementType
+  amount      Decimal          @db.Decimal(14, 2)
+  description String
+  occurredAt  DateTime
+  createdAt   DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([occurredAt])
+  @@map("cash_movement")
+}
+
+// ===================== Cobrança da plataforma (Asaas) =====================
+// Uma fatura por usuário por mês de competência (referenceMonth "YYYY-MM"). O
+// primeiro mês do usuário na plataforma é gratuito (nenhuma Invoice é criada para
+// o mês do cadastro). status só reflete PENDING/PAID — "vencido" não é um estado
+// gravado, é calculado a partir de dueDate < hoje (ver list-invoices usecase),
+// assim "gerar novo link" só precisa trocar asaasPaymentId/asaasInvoiceUrl/dueDate
+// sem precisar migrar de estado.
+enum InvoiceStatus {
+  PENDING
+  PAID
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  userId           String
+  referenceMonth   String
+  amount           Decimal       @db.Decimal(14, 2)
+  status           InvoiceStatus @default(PENDING)
+  dueDate          DateTime
+  paidAt           DateTime?
+  asaasPaymentId   String?       @unique
+  asaasInvoiceUrl  String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, referenceMonth])
+  @@index([userId])
+  @@index([status])
+  @@map("invoice")
+}
+
+// ===================== Admin panel / auditoria =====================
+
+enum LogType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  STATUS_CHANGE
+  PAYMENT
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  about      String
+  type       LogType
+  entityId   String?
+  entityType String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type])
+  @@map("audit_log")
+}

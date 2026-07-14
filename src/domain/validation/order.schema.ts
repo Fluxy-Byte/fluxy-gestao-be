@@ -1,0 +1,31 @@
+import { z } from "zod";
+
+export const createOrderItemSchema = z.object({
+    serviceId: z.string().min(1),
+    costPrice: z.number().min(0),
+    salePrice: z.number().min(0),
+    discount: z.number().min(0).optional(),
+    increase: z.number().min(0).optional(),
+    quantity: z.number().min(1).optional(),
+    finalPrice: z.number().min(0),
+});
+
+export const createOrderSchema = z.object({
+    clientId: z.string().min(1, "Selecione um cliente."),
+    notes: z.string().nullable().optional(),
+    paymentMethod: z.string().nullable().optional(),
+    deliveryDate: z.string().nullable().optional(),
+    paymentDueDate: z.string().nullable().optional(),
+    totalCost: z.number().min(0),
+    totalSale: z.number().min(0),
+    items: z.array(createOrderItemSchema).min(1, "Adicione ao menos um serviço."),
+});
+
+export const cancelOrderSchema = z.object({
+    cancelReason: z.string().nullable().optional(),
+});
+
+export const updatePaymentStatusSchema = z.object({
+    paymentStatus: z.enum(["PENDING", "PAID", "PARTIAL", "OVERDUE"]),
+    amountPaid: z.number().min(0).optional(),
+});

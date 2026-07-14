@@ -1,0 +1,55 @@
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./src/infrastructure/auth/auth";
+import { requireActiveBilling, requireAdmin, requireAuth, requireDiamante } from "./src/infrastructure/auth/require-auth.middleware";
+import { clientRoutes } from "./src/presentation/routes/client.routes";
+import { serviceRoutes } from "./src/presentation/routes/service.routes";
+import { orderRoutes } from "./src/presentation/routes/order.routes";
+import { userRoutes } from "./src/presentation/routes/user.routes";
+import { adminRoutes } from "./src/presentation/routes/admin.routes";
+import { publicRoutes } from "./src/presentation/routes/public.routes";
+import { expenseRoutes } from "./src/presentation/routes/expense.routes";
+import { debtRoutes } from "./src/presentation/routes/debt.routes";
+import { billingRoutes } from "./src/presentation/routes/billing.routes";
+import { errorHandler } from "./src/presentation/error-handler";
+import { scheduleDailyCashReconciliation } from "./src/infrastructure/jobs/daily-cash-reconciliation.job";
+import { scheduleDailyBilling } from "./src/infrastructure/jobs/daily-billing.job";
+
+const app = express();
+
+app.use(
+  cors({
+    origin: (process.env.FRONTEND_URL ?? "http://localhost:6502,https://gestao.fluxytechnologies.com.br").split(","),
+    credentials: true,
+  }),
+);
+
+app.all("/api/auth/*splat", toNodeHandler(auth));
+
+app.use(express.json());
+
+app.get("/", (_, res) => {
+  res.send("API funcionando!");
+});
+
+app.use("/api/public", publicRoutes);
+app.use("/api/clients", requireAuth, requireActiveBilling, clientRoutes);
+app.use("/api/services", requireAuth, requireActiveBilling, serviceRoutes);
+app.use("/api/orders", requireAuth, requireActiveBilling, orderRoutes);
+app.use("/api/users", requireAuth, userRoutes);
+app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
+app.use("/api/expenses", requireAuth, requireActiveBilling, requireDiamante, expenseRoutes);
+app.use("/api/debts", requireAuth, requireActiveBilling, requireDiamante, debtRoutes);
+app.use("/api/billing", requireAuth, billingRoutes);
+
+app.use(errorHandler);
+
+scheduleDailyCashReconciliation();
+scheduleDailyBilling();
+
+const port = Number(process.env.PORT) || 3000;
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
+});

@@ -1,0 +1,86 @@
+import type { Request, Response } from "express";
+import { orderRepository } from "../../infrastructure/repositories/order.repository";
+import { clientRepository } from "../../infrastructure/repositories/client.repository";
+import { auditLogRepository } from "../../infrastructure/repositories/audit-log.repository";
+import { listOpenOrdersUsecase, listClosedOrdersUsecase, listReceivableOrdersUsecase, getOrderDetailUsecase } from "../../application/usecases/order/list-orders.usecase";
+import { createOrderUsecase } from "../../application/usecases/order/create-order.usecase";
+import {
+    cancelOrderUsecase,
+    completeOrderUsecase,
+    reopenOrderUsecase,
+    updatePaymentStatusUsecase,
+} from "../../application/usecases/order/update-order-status.usecase";
+import { deleteOrderUsecase } from "../../application/usecases/order/delete-order.usecase";
+import { getDashboardUsecase } from "../../application/usecases/order/get-dashboard.usecase";
+import { getReportUsecase } from "../../application/usecases/order/get-report.usecase";
+import { serialize } from "../serialize";
+import type { OrderStatus } from "../../../generated/prisma/client";
+
+export const orderController = {
+    async listOpen(req: Request, res: Response) {
+        const orders = await listOpenOrdersUsecase(orderRepository, req.userId);
+        res.json(serialize(orders));
+    },
+
+    async listClosed(req: Request, res: Response) {
+        const orders = await listClosedOrdersUsecase(orderRepository, req.userId);
+        res.json(serialize(orders));
+    },
+
+    async listReceivable(req: Request, res: Response) {
+        const orders = await listReceivableOrdersUsecase(orderRepository, req.userId);
+        res.json(serialize(orders));
+    },
+
+    async detail(req: Request, res: Response) {
+        const order = await getOrderDetailUsecase(orderRepository, req.userId, req.params.id as string);
+        res.json(serialize(order));
+    },
+
+    async create(req: Request, res: Response) {
+        const order = await createOrderUsecase(orderRepository, clientRepository, auditLogRepository, req.userId, req.body);
+        res.status(201).json(serialize(order));
+    },
+
+    async complete(req: Request, res: Response) {
+        const order = await completeOrderUsecase(orderRepository, auditLogRepository, req.userId, req.params.id as string);
+        res.json(serialize(order));
+    },
+
+    async cancel(req: Request, res: Response) {
+        const order = await cancelOrderUsecase(orderRepository, auditLogRepository, req.userId, req.params.id as string, req.body);
+        res.json(serialize(order));
+    },
+
+    async reopen(req: Request, res: Response) {
+        const order = await reopenOrderUsecase(orderRepository, auditLogRepository, req.userId, req.params.id as string);
+        res.json(serialize(order));
+    },
+
+    async updatePayment(req: Request, res: Response) {
+        const order = await updatePaymentStatusUsecase(orderRepository, auditLogRepository, req.userId, req.params.id as string, req.body);
+        res.json(serialize(order));
+    },
+
+    async remove(req: Request, res: Response) {
+        await deleteOrderUsecase(orderRepository, auditLogRepository, req.userId, req.params.id as string);
+        res.status(204).end();
+    },
+
+    async dashboard(req: Request, res: Response) {
+        const data = await getDashboardUsecase(orderRepository, clientRepository, req.userId);
+        res.json(serialize(data));
+    },
+
+    async report(req: Request, res: Response) {
+        const { start, end, status } = req.query as { start: string; end: string; status?: string };
+        const data = await getReportUsecase(
+            orderRepository,
+            req.userId,
+            start,
+            end,
+            status && status !== "ALL" ? (status as OrderStatus) : undefined,
+        );
+        res.json(serialize(data));
+    },
+};
