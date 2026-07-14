@@ -1,8 +1,19 @@
 import { prisma } from "../database/prisma";
 import type { UserRepository } from "../../domain/repository/user.repository";
 
+// Normaliza para DDD + 8 dígitos locais, removendo DDI (55) e o 9º dígito do celular
+// quando presentes — ambos opcionais e inconsistentes entre as fontes: o telefone
+// salvo no perfil (mascarado, sem DDI) costuma ter o 9, enquanto o wa_id que a Meta
+// envia tem DDI e às vezes vem sem o 9 (número normalizado pela operadora/Meta).
 function normalizePhone(phone: string): string {
-    return phone.replace(/\D/g, "").slice(-11);
+    let digits = phone.replace(/\D/g, "");
+    if (digits.length >= 12) {
+        digits = digits.slice(-(digits.length - 2)); // remove o DDI (ex: 55)
+    }
+    if (digits.length === 11) {
+        digits = digits.slice(0, 2) + digits.slice(3); // remove o 9º dígito do celular
+    }
+    return digits;
 }
 
 export const userRepository: UserRepository = {
