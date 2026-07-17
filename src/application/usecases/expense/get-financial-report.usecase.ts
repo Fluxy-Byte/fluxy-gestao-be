@@ -107,7 +107,11 @@ export async function getFinancialReportUsecase(
         const key = occ.date.toISOString().slice(0, 10);
         if (dayMap.has(key)) dayMap.set(key, (dayMap.get(key) ?? 0) + occ.amount);
     }
-    const expenseDailySeries = Array.from(dayMap.entries()).map(([date, value]) => ({ date: date.slice(5), value }));
+    // "yyyy-MM-dd" -> "dd/MM" (formato brasileiro, dia antes do mês) para o eixo do gráfico.
+    const expenseDailySeries = Array.from(dayMap.entries()).map(([date, value]) => ({
+        date: `${date.slice(8, 10)}/${date.slice(5, 7)}`,
+        value,
+    }));
 
     // ----- Faturamento x Saída de caixa, últimos 12 meses -----
     const monthlyMap = new Map<string, { revenue: number; expenses: number }>();

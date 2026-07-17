@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { orderRepository } from "../../infrastructure/repositories/order.repository";
 import { clientRepository } from "../../infrastructure/repositories/client.repository";
+import { userRepository } from "../../infrastructure/repositories/user.repository";
 import { auditLogRepository } from "../../infrastructure/repositories/audit-log.repository";
 import { listOpenOrdersUsecase, listClosedOrdersUsecase, listReceivableOrdersUsecase, getOrderDetailUsecase } from "../../application/usecases/order/list-orders.usecase";
 import { createOrderUsecase } from "../../application/usecases/order/create-order.usecase";
@@ -10,9 +11,11 @@ import {
     reopenOrderUsecase,
     updatePaymentStatusUsecase,
 } from "../../application/usecases/order/update-order-status.usecase";
+import { updateOrderScheduleUsecase } from "../../application/usecases/order/update-order-schedule.usecase";
 import { deleteOrderUsecase } from "../../application/usecases/order/delete-order.usecase";
 import { getDashboardUsecase } from "../../application/usecases/order/get-dashboard.usecase";
 import { getReportUsecase } from "../../application/usecases/order/get-report.usecase";
+import { getCalendarOrdersUsecase } from "../../application/usecases/order/get-calendar-orders.usecase";
 import { serialize } from "../serialize";
 import type { OrderStatus } from "../../../generated/prisma/client";
 
@@ -38,7 +41,7 @@ export const orderController = {
     },
 
     async create(req: Request, res: Response) {
-        const order = await createOrderUsecase(orderRepository, clientRepository, auditLogRepository, req.userId, req.body);
+        const order = await createOrderUsecase(orderRepository, clientRepository, userRepository, auditLogRepository, req.userId, req.body);
         res.status(201).json(serialize(order));
     },
 
@@ -62,6 +65,18 @@ export const orderController = {
         res.json(serialize(order));
     },
 
+    async updateSchedule(req: Request, res: Response) {
+        const order = await updateOrderScheduleUsecase(
+            orderRepository,
+            userRepository,
+            auditLogRepository,
+            req.userId,
+            req.params.id as string,
+            req.body,
+        );
+        res.json(serialize(order));
+    },
+
     async remove(req: Request, res: Response) {
         await deleteOrderUsecase(orderRepository, auditLogRepository, req.userId, req.params.id as string);
         res.status(204).end();
@@ -69,6 +84,12 @@ export const orderController = {
 
     async dashboard(req: Request, res: Response) {
         const data = await getDashboardUsecase(orderRepository, clientRepository, req.userId);
+        res.json(serialize(data));
+    },
+
+    async calendar(req: Request, res: Response) {
+        const { start, end } = req.query as { start: string; end: string };
+        const data = await getCalendarOrdersUsecase(orderRepository, clientRepository, req.userId, start, end);
         res.json(serialize(data));
     },
 

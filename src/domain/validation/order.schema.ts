@@ -29,3 +29,7 @@ export const updatePaymentStatusSchema = z.object({
     paymentStatus: z.enum(["PENDING", "PAID", "PARTIAL", "OVERDUE"]),
     amountPaid: z.number().min(0).optional(),
 });
+
+export const updateScheduleSchema = z.object({
+    deliveryDate: z.string().min(1, "Informe a data e hora do agendamento."),
+});

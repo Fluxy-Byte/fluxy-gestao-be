@@ -1,4 +1,4 @@
-import type { User } from "../../../generated/prisma/client";
+import type { BusinessCategory, User } from "../../../generated/prisma/client";
 
 export interface UpdateProfileInput {
     name?: string;
@@ -7,6 +7,7 @@ export interface UpdateProfileInput {
 }
 
 export interface UpdateCompanyInput {
+    businessCategory?: BusinessCategory;
     companyName?: string | null;
     cnpj?: string | null;
     cpf?: string | null;

@@ -10,6 +10,17 @@ datasource db {
   provider = "postgresql"
 }
 
+// Categoria do negócio, escolhida pelo usuário no cadastro da empresa — muda como o
+// app se comporta: Cabeleireiro/PetShop usam a agenda (calendário + horário de
+// atendimento editável); Padrão/Laboratório usam a listagem tradicional em tabela e só
+// escolhem a data de entrega (sem horário).
+enum BusinessCategory {
+  STANDARD
+  HAIRDRESSER
+  LAB
+  PETSHOP
+}
+
 // ===================== Better Auth core =====================
 // Shape follows Better Auth's Prisma generator + the "admin" plugin
 // (role / banned / banReason / banExpires / impersonatedBy).
@@ -40,6 +51,7 @@ model User {
   phone            String?
   avatarUrl        String?
   theme            String  @default("light")
+  businessCategory BusinessCategory @default(STANDARD)
   companyName      String?
   cnpj             String?
   cpf              String?

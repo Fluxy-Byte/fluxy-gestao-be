@@ -7,6 +7,7 @@ export const updateProfileSchema = z.object({
 });
 
 export const updateCompanySchema = z.object({
+    businessCategory: z.enum(["STANDARD", "HAIRDRESSER", "LAB", "PETSHOP"]).optional(),
     companyName: z.string().nullable().optional(),
     cnpj: z.string().nullable().optional(),
     cpf: z.string().nullable().optional(),

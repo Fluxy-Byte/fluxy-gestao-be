@@ -5,6 +5,7 @@ import { asyncHandler } from "../error-handler";
 export const orderRoutes = Router();
 
 orderRoutes.get("/dashboard", asyncHandler(orderController.dashboard));
+orderRoutes.get("/calendar", asyncHandler(orderController.calendar));
 orderRoutes.get("/report", asyncHandler(orderController.report));
 orderRoutes.get("/open", asyncHandler(orderController.listOpen));
 orderRoutes.get("/closed", asyncHandler(orderController.listClosed));
@@ -15,4 +16,5 @@ orderRoutes.post("/:id/complete", asyncHandler(orderController.complete));
 orderRoutes.post("/:id/reopen", asyncHandler(orderController.reopen));
 orderRoutes.post("/:id/cancel", asyncHandler(orderController.cancel));
 orderRoutes.patch("/:id/payment-status", asyncHandler(orderController.updatePayment));
+orderRoutes.patch("/:id/schedule", asyncHandler(orderController.updateSchedule));
 orderRoutes.delete("/:id", asyncHandler(orderController.remove));

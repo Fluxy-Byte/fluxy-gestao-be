@@ -114,6 +114,17 @@ export const orderRepository: OrderRepository = {
         });
     },
 
+    findByDeliveryDateRange(userId, start, end) {
+        return prisma.order.findMany({
+            where: {
+                userId,
+                deletedAt: null,
+                deliveryDate: { gte: start, lte: end },
+            },
+            orderBy: { deliveryDate: "asc" },
+        });
+    },
+
     findPaidByDeliveryDateRange(userId, start, end, status) {
         if (status && status !== "COMPLETED") return Promise.resolve([]);
         return prisma.order.findMany({
@@ -229,6 +240,13 @@ export const orderRepository: OrderRepository = {
         return prisma.order.update({
             where: { id, userId },
             data: { paymentStatus: data.paymentStatus, amountPaid: data.amountPaid, lastPaymentAt: new Date() },
+        });
+    },
+
+    updateDeliveryDate(id, userId, deliveryDate) {
+        return prisma.order.update({
+            where: { id, userId },
+            data: { deliveryDate },
         });
     },
 

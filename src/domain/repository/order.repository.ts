@@ -46,6 +46,10 @@ export interface OrderRepository {
     findByNumber(userId: string, numberOrder: bigint): Promise<OrderDetail | null>;
     findByDateRange(userId: string, start: Date, end: Date, status?: OrderStatus): Promise<Order[]>;
     findItemsByDateRange(userId: string, start: Date, end: Date, status?: OrderStatus): Promise<OrderItemWithServiceName[]>;
+    // Calendário do dashboard: toda OS (qualquer status) cuja data de ENTREGA cai no
+    // intervalo — diferente de findPaidByDeliveryDateRange, que só traz OS pagas
+    // integralmente (usado pelo gráfico de faturamento do relatório).
+    findByDeliveryDateRange(userId: string, start: Date, end: Date): Promise<Order[]>;
     // Faturamento/custo do relatório precisam do dinheiro recebido DENTRO do período —
     // isto é, por completedAt (quando a OS foi finalizada/paga), não por createdAt (quando
     // foi criada). Uma OS criada em um mês e finalizada/paga no seguinte deve contar como
@@ -64,5 +68,6 @@ export interface OrderRepository {
         data: { statusOrder: OrderStatus; completedAt?: Date | null; canceledAt?: Date | null; cancelReason?: string | null },
     ): Promise<Order>;
     updatePaymentStatus(id: string, userId: string, data: UpdatePaymentInput): Promise<Order>;
+    updateDeliveryDate(id: string, userId: string, deliveryDate: Date | null): Promise<Order>;
     softDelete(id: string, userId: string): Promise<void>;
 }

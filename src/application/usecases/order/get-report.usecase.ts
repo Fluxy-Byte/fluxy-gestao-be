@@ -64,8 +64,10 @@ export async function getReportUsecase(
         const key = new Date(o.lastPaymentAt).toISOString().slice(0, 10);
         if (costByDay.has(key)) costByDay.set(key, costByDay.get(key)! + cashCost(o));
     }
-    const revenueSeries = Array.from(revenueByDay.entries()).map(([date, value]) => ({ date: date.slice(5), value }));
-    const costSeries = Array.from(costByDay.entries()).map(([date, value]) => ({ date: date.slice(5), value }));
+    // "yyyy-MM-dd" -> "dd/MM" (formato brasileiro, dia antes do mês) para o eixo dos gráficos.
+    const toBRLabel = (isoDate: string) => `${isoDate.slice(8, 10)}/${isoDate.slice(5, 7)}`;
+    const revenueSeries = Array.from(revenueByDay.entries()).map(([date, value]) => ({ date: toBRLabel(date), value }));
+    const costSeries = Array.from(costByDay.entries()).map(([date, value]) => ({ date: toBRLabel(date), value }));
 
     // Status das OS no período (mesma categorização do antigo gráfico de pizza do dashboard).
     const nowCutoff = new Date();
