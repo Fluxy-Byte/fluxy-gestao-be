@@ -20,6 +20,13 @@ export const serviceRepository: ServiceRepository = {
         });
     },
 
+    findCatalogVisibleByUser(userId) {
+        return prisma.service.findMany({
+            where: { userId, deletedAt: null, showInCatalog: true },
+            orderBy: { name: "asc" },
+        });
+    },
+
     findById(id, userId) {
         return prisma.service.findFirst({ where: { id, userId, deletedAt: null } });
     },

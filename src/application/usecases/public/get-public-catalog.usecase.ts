@@ -13,7 +13,7 @@ export async function getPublicCatalogUsecase(
 
     const [client, services, company] = await Promise.all([
         clientRepo.findById(clientId, userId),
-        serviceRepo.findActiveByUser(userId),
+        serviceRepo.findCatalogVisibleByUser(userId),
         userRepo.findById(userId),
     ]);
 

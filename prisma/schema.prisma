@@ -191,6 +191,7 @@ model Service {
   costPrice   Decimal   @default(0) @db.Decimal(14, 2)
   salePrice   Decimal   @default(0) @db.Decimal(14, 2)
   active      Boolean   @default(true)
+  showInCatalog Boolean @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?

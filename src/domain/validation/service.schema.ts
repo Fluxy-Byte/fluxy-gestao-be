@@ -7,6 +7,7 @@ export const createServiceSchema = z.object({
     costPrice: z.number().min(0).optional(),
     salePrice: z.number().min(0).optional(),
     active: z.boolean().optional(),
+    showInCatalog: z.boolean().optional(),
 });
 
 export const updateServiceSchema = createServiceSchema.partial();
