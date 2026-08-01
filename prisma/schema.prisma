@@ -221,6 +221,10 @@ model Order {
   userId         String
   clientId       String
   numberOrder    BigInt
+  // Só usado quando o usuário está na categoria LAB (ver BusinessCategory) — nome do
+  // paciente ao qual o exame/serviço se refere, distinto do cliente (que é quem paga/
+  // solicita). Opcional e não exibido/coletado nas demais categorias.
+  patientName    String?
   statusOrder    OrderStatus   @default(PENDING)
   paymentStatus  PaymentStatus @default(PENDING)
   paymentMethod  String?

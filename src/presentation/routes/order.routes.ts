@@ -16,5 +16,6 @@ orderRoutes.post("/:id/complete", asyncHandler(orderController.complete));
 orderRoutes.post("/:id/reopen", asyncHandler(orderController.reopen));
 orderRoutes.post("/:id/cancel", asyncHandler(orderController.cancel));
 orderRoutes.patch("/:id/payment-status", asyncHandler(orderController.updatePayment));
+orderRoutes.patch("/:id/items", asyncHandler(orderController.updateItems));
 orderRoutes.patch("/:id/schedule", asyncHandler(orderController.updateSchedule));
 orderRoutes.delete("/:id", asyncHandler(orderController.remove));

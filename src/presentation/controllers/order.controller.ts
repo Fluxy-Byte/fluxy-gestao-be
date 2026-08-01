@@ -9,6 +9,7 @@ import {
     cancelOrderUsecase,
     completeOrderUsecase,
     reopenOrderUsecase,
+    updateOrderItemsUsecase,
     updatePaymentStatusUsecase,
 } from "../../application/usecases/order/update-order-status.usecase";
 import { updateOrderScheduleUsecase } from "../../application/usecases/order/update-order-schedule.usecase";
@@ -62,6 +63,11 @@ export const orderController = {
 
     async updatePayment(req: Request, res: Response) {
         const order = await updatePaymentStatusUsecase(orderRepository, auditLogRepository, req.userId, req.params.id as string, req.body);
+        res.json(serialize(order));
+    },
+
+    async updateItems(req: Request, res: Response) {
+        const order = await updateOrderItemsUsecase(orderRepository, auditLogRepository, req.userId, req.params.id as string, req.body);
         res.json(serialize(order));
     },
 

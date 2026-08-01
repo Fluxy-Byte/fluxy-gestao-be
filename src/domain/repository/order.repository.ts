@@ -12,6 +12,7 @@ export interface CreateOrderItemInput {
 
 export interface CreateOrderInput {
     clientId: string;
+    patientName?: string | null;
     notes?: string | null;
     paymentMethod?: string | null;
     deliveryDate?: string | null;
@@ -24,6 +25,12 @@ export interface CreateOrderInput {
 export interface UpdatePaymentInput {
     paymentStatus: PaymentStatus;
     amountPaid: number;
+}
+
+export interface UpdateOrderItemsInput {
+    items: CreateOrderItemInput[];
+    totalCost: number;
+    totalSale: number;
 }
 
 export type OrderWithClientName = Order & { client: { name: string } };
@@ -62,6 +69,7 @@ export interface OrderRepository {
     findPaidByDeliveryDateRange(userId: string, start: Date, end: Date, status?: OrderStatus): Promise<Order[]>;
     getDashboardCounts(userId: string): Promise<DashboardCounts>;
     createWithItems(userId: string, data: CreateOrderInput): Promise<Order>;
+    updateItems(id: string, userId: string, data: UpdateOrderItemsInput): Promise<Order>;
     updateStatus(
         id: string,
         userId: string,

@@ -12,6 +12,7 @@ export const createOrderItemSchema = z.object({
 
 export const createOrderSchema = z.object({
     clientId: z.string().min(1, "Selecione um cliente."),
+    patientName: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
     paymentMethod: z.string().nullable().optional(),
     deliveryDate: z.string().nullable().optional(),
@@ -19,6 +20,12 @@ export const createOrderSchema = z.object({
     totalCost: z.number().min(0),
     totalSale: z.number().min(0),
     items: z.array(createOrderItemSchema).min(1, "Adicione ao menos um serviço."),
+});
+
+export const updateOrderItemsSchema = z.object({
+    items: z.array(createOrderItemSchema).min(1, "Adicione ao menos um serviço."),
+    totalCost: z.number().min(0),
+    totalSale: z.number().min(0),
 });
 
 export const cancelOrderSchema = z.object({

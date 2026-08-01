@@ -1,6 +1,6 @@
 import type { OrderRepository } from "../../../domain/repository/order.repository";
 import type { AuditLogRepository } from "../../../domain/repository/audit-log.repository";
-import { cancelOrderSchema, updatePaymentStatusSchema } from "../../../domain/validation/order.schema";
+import { cancelOrderSchema, updateOrderItemsSchema, updatePaymentStatusSchema } from "../../../domain/validation/order.schema";
 import { invalidateDashboardCache } from "./get-dashboard.usecase";
 import { invalidateOrdersListCache } from "./list-orders.usecase";
 import { recordAuditLog } from "../audit/record-audit-log.usecase";
@@ -77,6 +77,36 @@ export async function cancelOrderUsecase(
         entityId: order.id,
         entityType: "Order",
         metadata: cancelReason ? { cancelReason } : null,
+    });
+    return order;
+}
+
+export async function updateOrderItemsUsecase(
+    repo: OrderRepository,
+    auditRepo: AuditLogRepository,
+    userId: string,
+    id: string,
+    input: unknown,
+) {
+    const data = updateOrderItemsSchema.parse(input);
+
+    const existing = await repo.findDetailById(id, userId);
+    if (!existing) throw new Error("Ordem de serviço não encontrada.");
+    // Só permite editar os itens enquanto a OS está aberta — depois de concluída/paga os
+    // totais já podem ter sido usados na conciliação de caixa (ver reconcileUserCash).
+    if (existing.statusOrder !== "PENDING") {
+        throw new Error("Só é possível editar os serviços de uma OS em aberto.");
+    }
+
+    const order = await repo.updateItems(id, userId, data);
+    await invalidateDashboardCache(userId);
+    await invalidateOrdersListCache(userId);
+    await recordAuditLog(auditRepo, {
+        userId,
+        about: `Serviços da OS #${order.numberOrder} atualizados`,
+        type: "UPDATE",
+        entityId: order.id,
+        entityType: "Order",
     });
     return order;
 }

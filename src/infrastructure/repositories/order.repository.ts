@@ -3,6 +3,7 @@ import type {
     CreateOrderInput,
     DashboardCounts,
     OrderRepository,
+    UpdateOrderItemsInput,
     UpdatePaymentInput,
 } from "../../domain/repository/order.repository";
 import type { OrderStatus } from "../../../generated/prisma/client";
@@ -196,6 +197,7 @@ export const orderRepository: OrderRepository = {
                     userId,
                     clientId: data.clientId,
                     numberOrder: orderSequence,
+                    patientName: data.patientName ?? null,
                     notes: data.notes ?? null,
                     paymentMethod: data.paymentMethod ?? null,
                     deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
@@ -221,6 +223,31 @@ export const orderRepository: OrderRepository = {
             });
 
             return order;
+        });
+    },
+
+    async updateItems(id, userId, data: UpdateOrderItemsInput) {
+        return prisma.$transaction(async (tx) => {
+            await tx.orderItem.deleteMany({ where: { orderId: id, userId } });
+
+            await tx.orderItem.createMany({
+                data: data.items.map((item) => ({
+                    orderId: id,
+                    serviceId: item.serviceId,
+                    userId,
+                    costPrice: item.costPrice,
+                    salePrice: item.salePrice,
+                    discount: item.discount ?? 0,
+                    increase: item.increase ?? 0,
+                    quantity: item.quantity ?? 1,
+                    finalPrice: item.finalPrice,
+                })),
+            });
+
+            return tx.order.update({
+                where: { id, userId },
+                data: { totalCost: data.totalCost, totalSale: data.totalSale },
+            });
         });
     },
 
