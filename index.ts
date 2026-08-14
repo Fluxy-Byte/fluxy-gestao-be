@@ -18,6 +18,7 @@ import { assistantRoutes } from "./src/presentation/routes/assistant.routes";
 import { errorHandler } from "./src/presentation/error-handler";
 import { scheduleDailyCashReconciliation } from "./src/infrastructure/jobs/daily-cash-reconciliation.job";
 import { scheduleDailyBilling } from "./src/infrastructure/jobs/daily-billing.job";
+import { scheduleRecurringOrders } from "./src/infrastructure/jobs/recurring-orders.job";
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use(errorHandler);
 
 scheduleDailyCashReconciliation();
 scheduleDailyBilling();
+scheduleRecurringOrders();
 
 const port = Number(process.env.PORT) || 3000;
 app.listen(port, () => {

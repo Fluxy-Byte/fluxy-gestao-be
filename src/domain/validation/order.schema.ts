@@ -10,17 +10,24 @@ export const createOrderItemSchema = z.object({
     finalPrice: z.number().min(0),
 });
 
-export const createOrderSchema = z.object({
-    clientId: z.string().min(1, "Selecione um cliente."),
-    patientName: z.string().nullable().optional(),
-    notes: z.string().nullable().optional(),
-    paymentMethod: z.string().nullable().optional(),
-    deliveryDate: z.string().nullable().optional(),
-    paymentDueDate: z.string().nullable().optional(),
-    totalCost: z.number().min(0),
-    totalSale: z.number().min(0),
-    items: z.array(createOrderItemSchema).min(1, "Adicione ao menos um serviço."),
-});
+export const createOrderSchema = z
+    .object({
+        clientId: z.string().min(1, "Selecione um cliente."),
+        patientName: z.string().nullable().optional(),
+        notes: z.string().nullable().optional(),
+        paymentMethod: z.string().nullable().optional(),
+        deliveryDate: z.string().nullable().optional(),
+        paymentDueDate: z.string().nullable().optional(),
+        totalCost: z.number().min(0),
+        totalSale: z.number().min(0),
+        items: z.array(createOrderItemSchema).min(1, "Adicione ao menos um serviço."),
+        recurWeekly: z.boolean().optional(),
+        recurMonthly: z.boolean().optional(),
+    })
+    .refine((data) => !(data.recurWeekly || data.recurMonthly) || !!data.deliveryDate, {
+        message: "Informe a data e hora do agendamento para tornar a OS fixa.",
+        path: ["deliveryDate"],
+    });
 
 export const updateOrderItemsSchema = z.object({
     items: z.array(createOrderItemSchema).min(1, "Adicione ao menos um serviço."),

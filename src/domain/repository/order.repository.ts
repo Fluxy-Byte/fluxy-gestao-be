@@ -20,6 +20,8 @@ export interface CreateOrderInput {
     totalCost: number;
     totalSale: number;
     items: CreateOrderItemInput[];
+    recurWeekly?: boolean;
+    recurMonthly?: boolean;
 }
 
 export interface UpdatePaymentInput {
@@ -35,7 +37,11 @@ export interface UpdateOrderItemsInput {
 
 export type OrderWithClientName = Order & { client: { name: string } };
 export type OrderItemWithServiceName = OrderItem & { service: { name: string } };
-export type OrderDetail = Order & { client: Client | null; items: OrderItemWithServiceName[] };
+export type OrderDetail = Order & {
+    client: Client | null;
+    items: OrderItemWithServiceName[];
+    recurringParent: { numberOrder: bigint } | null;
+};
 export type OrderWithItems = Order & { items: OrderItemWithServiceName[] };
 
 export interface DashboardCounts {
@@ -77,5 +83,6 @@ export interface OrderRepository {
     ): Promise<Order>;
     updatePaymentStatus(id: string, userId: string, data: UpdatePaymentInput): Promise<Order>;
     updateDeliveryDate(id: string, userId: string, deliveryDate: Date | null): Promise<Order>;
+    stopRecurrence(id: string, userId: string): Promise<Order>;
     softDelete(id: string, userId: string): Promise<void>;
 }

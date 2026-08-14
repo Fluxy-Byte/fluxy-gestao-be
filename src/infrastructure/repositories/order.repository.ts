@@ -7,6 +7,7 @@ import type {
     UpdatePaymentInput,
 } from "../../domain/repository/order.repository";
 import type { OrderStatus } from "../../../generated/prisma/client";
+import { nextOrderOccurrence } from "../../domain/order-recurrence";
 
 export const orderRepository: OrderRepository = {
     findOpenByUser(userId) {
@@ -67,6 +68,7 @@ export const orderRepository: OrderRepository = {
             include: {
                 client: true,
                 orderItems: { include: { service: { select: { name: true } } } },
+                recurringParent: { select: { numberOrder: true } },
             },
         }).then((order) => {
             if (!order) return null;
@@ -192,6 +194,16 @@ export const orderRepository: OrderRepository = {
                 RETURNING "orderSequence"
             `;
 
+            const deliveryDate = data.deliveryDate ? new Date(data.deliveryDate) : null;
+            const recurWeekly = data.recurWeekly ?? false;
+            const recurMonthly = data.recurMonthly ?? false;
+            // A primeira ocorrência é a própria OS sendo criada agora; a próxima gerada
+            // automaticamente pelo job (ver recurring-orders.job.ts) começa daqui pra frente.
+            const nextOccurrenceAt =
+                (recurWeekly || recurMonthly) && deliveryDate
+                    ? nextOrderOccurrence(deliveryDate, deliveryDate, recurWeekly, recurMonthly)
+                    : null;
+
             const order = await tx.order.create({
                 data: {
                     userId,
@@ -200,11 +212,14 @@ export const orderRepository: OrderRepository = {
                     patientName: data.patientName ?? null,
                     notes: data.notes ?? null,
                     paymentMethod: data.paymentMethod ?? null,
-                    deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
+                    deliveryDate,
                     paymentDueDate: data.paymentDueDate ? new Date(data.paymentDueDate) : null,
                     totalCost: data.totalCost,
                     totalSale: data.totalSale,
                     createdBy: userId,
+                    recurWeekly,
+                    recurMonthly,
+                    nextOccurrenceAt,
                 },
             });
 
@@ -274,6 +289,13 @@ export const orderRepository: OrderRepository = {
         return prisma.order.update({
             where: { id, userId },
             data: { deliveryDate },
+        });
+    },
+
+    stopRecurrence(id, userId) {
+        return prisma.order.update({
+            where: { id, userId },
+            data: { recurWeekly: false, recurMonthly: false, nextOccurrenceAt: null },
         });
     },
 

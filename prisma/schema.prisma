@@ -256,15 +256,29 @@ model Order {
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
 
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  client     Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  orderItems OrderItem[]
+  // "OS fixa": só a OS original (o "template") carrega recurWeekly/recurMonthly — as
+  // ocorrências geradas automaticamente pelo job (ver recurring-orders.job.ts) nascem com
+  // as duas flags falsas e só guardam recurringParentId, pra não disparar uma nova série
+  // recursiva. nextOccurrenceAt é o watermark de quando gerar a próxima ocorrência (ver
+  // domain/order-recurrence.ts); fica null quando a série não é (ou não é mais) recorrente.
+  recurWeekly       Boolean   @default(false)
+  recurMonthly      Boolean   @default(false)
+  nextOccurrenceAt  DateTime?
+  recurringParentId String?
+
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client           Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  orderItems       OrderItem[]
+  recurringParent  Order?      @relation("OrderRecurrence", fields: [recurringParentId], references: [id], onDelete: SetNull)
+  recurringChildren Order[]    @relation("OrderRecurrence")
 
   @@unique([userId, numberOrder])
   @@index([userId])
   @@index([clientId])
   @@index([entryDate])
   @@index([statusOrder])
+  @@index([nextOccurrenceAt])
+  @@index([recurringParentId])
   @@map("order")
 }
 
