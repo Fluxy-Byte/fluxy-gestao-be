@@ -26,16 +26,11 @@ import { serialize } from "../serialize";
 import type { OrderStatus } from "../../../generated/prisma/client";
 
 // Todas as rotas aqui são chamadas pelo agente de WhatsApp (Fly), não por sessão de
-// usuário — por isso o userId sempre vem de req.params, nunca de req.userId, e o gate
-// Diamante é reimplementado localmente (o middleware requireDiamante depende de
-// req.userPlan, que só requireAuth preenche).
-async function requireDiamantePlan(userId: string): Promise<{ id: string; role: string; plan: string } | { error: string; status: number }> {
+// usuário — por isso o userId sempre vem de req.params, nunca de req.userId.
+async function requireExistingUser(userId: string): Promise<{ id: string; role: string } | { error: string; status: number }> {
     const user = await userRepository.findById(userId);
     if (!user) return { error: "Usuário não encontrado.", status: 404 };
-    if (user.role !== "admin" && user.plan !== "diamante") {
-        return { error: "Funcionalidade disponível apenas no plano Diamante.", status: 403 };
-    }
-    return { id: user.id, role: user.role, plan: user.plan };
+    return { id: user.id, role: user.role };
 }
 
 export const assistantController = {
@@ -117,7 +112,7 @@ export const assistantController = {
     },
 
     async debts(req: Request, res: Response) {
-        const gate = await requireDiamantePlan(req.params.userId as string);
+        const gate = await requireExistingUser(req.params.userId as string);
         if ("error" in gate) {
             res.status(gate.status).json({ error: gate.error });
             return;
@@ -127,7 +122,7 @@ export const assistantController = {
     },
 
     async expenses(req: Request, res: Response) {
-        const gate = await requireDiamantePlan(req.params.userId as string);
+        const gate = await requireExistingUser(req.params.userId as string);
         if ("error" in gate) {
             res.status(gate.status).json({ error: gate.error });
             return;
@@ -137,7 +132,7 @@ export const assistantController = {
     },
 
     async financialReport(req: Request, res: Response) {
-        const gate = await requireDiamantePlan(req.params.userId as string);
+        const gate = await requireExistingUser(req.params.userId as string);
         if ("error" in gate) {
             res.status(gate.status).json({ error: gate.error });
             return;

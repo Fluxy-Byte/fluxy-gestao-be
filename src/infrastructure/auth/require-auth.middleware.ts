@@ -7,7 +7,6 @@ declare global {
         interface Request {
             userId: string;
             userRole: string;
-            userPlan: string;
             userBillingBlocked: boolean;
         }
     }
@@ -25,7 +24,6 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
     req.userId = session.user.id;
     req.userRole = (session.user as any).role ?? "user";
-    req.userPlan = (session.user as any).plan ?? "plus";
     req.userBillingBlocked = (session.user as any).billingBlocked ?? false;
     next();
 }
@@ -45,15 +43,6 @@ export async function requireActiveBilling(req: Request, res: Response, next: Ne
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
     if (req.userRole !== "admin") {
         res.status(403).json({ error: "Acesso restrito a administradores." });
-        return;
-    }
-    next();
-}
-
-// Diamante-gated features: admins always have full access regardless of plan.
-export async function requireDiamante(req: Request, res: Response, next: NextFunction) {
-    if (req.userRole !== "admin" && req.userPlan !== "diamante") {
-        res.status(403).json({ error: "Funcionalidade disponível apenas no plano Diamante." });
         return;
     }
     next();

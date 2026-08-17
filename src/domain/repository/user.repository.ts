@@ -40,7 +40,6 @@ export interface UserRepository {
     updateProfile(id: string, data: UpdateProfileInput): Promise<User>;
     updateCompany(id: string, data: UpdateCompanyInput): Promise<User>;
     updateBrand(id: string, data: UpdateBrandInput): Promise<User>;
-    updatePlan(id: string, plan: string): Promise<User>;
     count(): Promise<number>;
     // Billing — usuários pagantes (role != admin) cadastrados antes do início do mês
     // corrente, ou seja, que já passaram do primeiro mês gratuito.

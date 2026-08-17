@@ -43,9 +43,8 @@ model User {
   banReason  String?
   banExpires DateTime?
 
-  // client contract level — gates diamante-only features (expenses, financial report).
-  // Independent from `role`: admins get full access regardless of plan.
-  plan String @default("plus")
+  // Plano único — mantido apenas para referência de billing, não gate mais acesso a funcionalidades.
+  plan String @default("diamante")
 
   // company/profile fields (was `profiles` table)
   phone            String?

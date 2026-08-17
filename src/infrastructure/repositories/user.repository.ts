@@ -50,10 +50,6 @@ export const userRepository: UserRepository = {
         return prisma.user.update({ where: { id }, data });
     },
 
-    updatePlan(id, plan) {
-        return prisma.user.update({ where: { id }, data: { plan } });
-    },
-
     count() {
         return prisma.user.count();
     },

@@ -62,9 +62,8 @@ export const auth = betterAuth({
             primaryColor: { type: "string", required: false, defaultValue: "#8c52ff" },
             pdfColor: { type: "string", required: false, defaultValue: "#8c52ff" },
             includeLogoInPdf: { type: "boolean", required: false, defaultValue: true },
-            // Contract level, gates diamante-only features. Not client-settable —
-            // only changed via the admin-only PATCH /api/admin/users/:id/plan endpoint.
-            plan: { type: "string", required: false, defaultValue: "plus", input: false },
+            // Plano único — mantido apenas para referência de billing. Não editável pelo cliente.
+            plan: { type: "string", required: false, defaultValue: "diamante", input: false },
             // Set only by the daily billing job (invoice overdue) / cleared when payment
             // is confirmed. Not client-settable.
             billingBlocked: { type: "boolean", required: false, defaultValue: false, input: false },

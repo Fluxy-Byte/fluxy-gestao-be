@@ -6,5 +6,4 @@ export const adminRoutes = Router();
 
 adminRoutes.get("/metrics", asyncHandler(adminController.metrics));
 adminRoutes.get("/audit-log", asyncHandler(adminController.auditLog));
-adminRoutes.patch("/users/:id/plan", asyncHandler(adminController.updateUserPlan));
 adminRoutes.get("/overdue-users", asyncHandler(adminController.overdueUsers));

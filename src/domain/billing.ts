@@ -1,12 +1,8 @@
-// Preço mensal por plano. Diamante está em promoção (valor cheio é R$60 — ver
-// landing page), cobrando o mesmo valor do Plus por enquanto.
-export const PLAN_PRICES: Record<string, number> = {
-    plus: 40,
-    diamante: 40,
-};
+// Preço mensal da assinatura — plano único.
+export const SUBSCRIPTION_PRICE = 20;
 
-export function planPrice(plan: string): number {
-    return PLAN_PRICES[plan] ?? PLAN_PRICES.plus;
+export function planPrice(_plan: string): number {
+    return SUBSCRIPTION_PRICE;
 }
 
 export function monthKey(date: Date): string {
