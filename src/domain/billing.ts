@@ -1,5 +1,5 @@
 // Preço mensal da assinatura — plano único.
-export const SUBSCRIPTION_PRICE = 20;
+export const SUBSCRIPTION_PRICE = 19.99;
 
 export function planPrice(_plan: string): number {
     return SUBSCRIPTION_PRICE;

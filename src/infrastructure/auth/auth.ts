@@ -63,7 +63,7 @@ export const auth = betterAuth({
             pdfColor: { type: "string", required: false, defaultValue: "#8c52ff" },
             includeLogoInPdf: { type: "boolean", required: false, defaultValue: true },
             // Plano único — mantido apenas para referência de billing. Não editável pelo cliente.
-            plan: { type: "string", required: false, defaultValue: "diamante", input: false },
+            plan: { type: "string", required: false, defaultValue: "mensal", input: false },
             // Set only by the daily billing job (invoice overdue) / cleared when payment
             // is confirmed. Not client-settable.
             billingBlocked: { type: "boolean", required: false, defaultValue: false, input: false },
