@@ -29,6 +29,7 @@ export interface InvoiceRepository {
     findAllByUser(userId: string): Promise<Invoice[]>;
     findById(id: string): Promise<Invoice | null>;
     findByUserAndMonth(userId: string, referenceMonth: string): Promise<Invoice | null>;
+    findByAsaasPaymentId(asaasPaymentId: string): Promise<Invoice | null>;
     findPendingWithPaymentId(userId?: string): Promise<Invoice[]>;
     findUnpaidDueBefore(userId: string, before: Date): Promise<Invoice[]>;
     findAllUnpaidDueBefore(before: Date): Promise<Invoice[]>;

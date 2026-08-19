@@ -14,6 +14,7 @@ import { publicRoutes } from "./src/presentation/routes/public.routes";
 import { expenseRoutes } from "./src/presentation/routes/expense.routes";
 import { debtRoutes } from "./src/presentation/routes/debt.routes";
 import { billingRoutes } from "./src/presentation/routes/billing.routes";
+import { asaasWebhookRoutes } from "./src/presentation/routes/asaas-webhook.routes";
 import { assistantRoutes } from "./src/presentation/routes/assistant.routes";
 import { errorHandler } from "./src/presentation/error-handler";
 import { scheduleDailyCashReconciliation } from "./src/infrastructure/jobs/daily-cash-reconciliation.job";
@@ -46,6 +47,7 @@ app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
 app.use("/api/expenses", requireAuth, requireActiveBilling, expenseRoutes);
 app.use("/api/debts", requireAuth, requireActiveBilling, debtRoutes);
 app.use("/api/billing", requireAuth, billingRoutes);
+app.use("/api/webhooks/asaas", asaasWebhookRoutes);
 app.use("/api/internal/assistant", requireInternalService, assistantRoutes);
 
 app.use(errorHandler);

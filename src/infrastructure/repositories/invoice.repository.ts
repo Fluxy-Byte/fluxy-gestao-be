@@ -18,6 +18,10 @@ export const invoiceRepository: InvoiceRepository = {
         return prisma.invoice.findUnique({ where: { userId_referenceMonth: { userId, referenceMonth } } });
     },
 
+    findByAsaasPaymentId(asaasPaymentId) {
+        return prisma.invoice.findFirst({ where: { asaasPaymentId } });
+    },
+
     findPendingWithPaymentId(userId?: string) {
         return prisma.invoice.findMany({
             where: { status: "PENDING", asaasPaymentId: { not: null }, ...(userId ? { userId } : {}) },
