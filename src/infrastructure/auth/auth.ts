@@ -5,6 +5,7 @@ import { prisma } from "../database/prisma";
 import { sendMail } from "../email/mailer";
 import { resetPasswordEmailTemplate, verificationEmailTemplate } from "../email/templates";
 import { auditLogRepository } from "../repositories/audit-log.repository";
+import { normalizePhoneForStorage } from "../../domain/validation/normalize-phone";
 
 export const auth = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL,
@@ -71,6 +72,19 @@ export const auth = betterAuth({
     },
     plugins: [admin()],
     databaseHooks: {
+        user: {
+            create: {
+                // Normaliza o telefone informado no cadastro (signup.tsx) para o mesmo
+                // formato usado em todo o resto do sistema: só dígitos, com DDI 55 na
+                // frente. Fora daqui, edições de perfil/empresa passam pelos usecases
+                // próprios (não por este hook), que fazem a mesma normalização via
+                // updateProfileSchema/updateCompanySchema.
+                before: async (user) => {
+                    if (typeof user.phone !== "string") return;
+                    return { data: { ...user, phone: normalizePhoneForStorage(user.phone) } };
+                },
+            },
+        },
         session: {
             create: {
                 after: async (session) => {

@@ -1,19 +1,11 @@
 import { z } from "zod";
+import { normalizePhoneForStorage } from "./normalize-phone";
 
-// Sempre grava o telefone do cliente com o DDI (55) na frente, já que os números
-// são usados para contato via WhatsApp. Considera que o DDI já está presente quando
-// há 12+ dígitos começando com 55 (mesmo critério usado em user.repository.ts),
-// evitando duplicar o prefixo em números cujo DDD também seja 55 (ex: Santa Maria/RS).
 const phoneSchema = z
     .string()
     .nullable()
     .optional()
-    .transform((v) => {
-        if (v == null) return v ?? null;
-        const digits = v.replace(/\D/g, "");
-        if (!digits) return null;
-        return digits.length >= 12 && digits.startsWith("55") ? digits : `55${digits}`;
-    });
+    .transform((v) => (v == null ? v ?? null : normalizePhoneForStorage(v)));
 
 export const createClientSchema = z.object({
     name: z.string().trim().min(1, "Nome é obrigatório."),

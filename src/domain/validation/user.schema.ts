@@ -1,8 +1,15 @@
 import { z } from "zod";
+import { normalizePhoneForStorage } from "./normalize-phone";
+
+const phoneSchema = z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => (v == null ? v ?? null : normalizePhoneForStorage(v)));
 
 export const updateProfileSchema = z.object({
     name: z.string().trim().min(1).optional(),
-    phone: z.string().nullable().optional(),
+    phone: phoneSchema,
     theme: z.enum(["light", "dark"]).optional(),
 });
 
@@ -11,7 +18,7 @@ export const updateCompanySchema = z.object({
     companyName: z.string().nullable().optional(),
     cnpj: z.string().nullable().optional(),
     cpf: z.string().nullable().optional(),
-    phone: z.string().nullable().optional(),
+    phone: phoneSchema,
     cep: z.string().nullable().optional(),
     address: z.string().nullable().optional(),
     addressNumber: z.string().nullable().optional(),

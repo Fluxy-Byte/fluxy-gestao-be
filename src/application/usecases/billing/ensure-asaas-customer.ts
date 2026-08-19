@@ -1,6 +1,7 @@
 import type { User } from "../../../../generated/prisma/client";
 import type { UserRepository } from "../../../domain/repository/user.repository";
 import { createAsaasCustomer } from "../../../infrastructure/payment/asaas.client";
+import { stripCountryCode } from "../../../domain/validation/normalize-phone";
 
 export async function ensureAsaasCustomer(userRepo: UserRepository, user: User): Promise<string> {
     if (user.asaasCustomerId) return user.asaasCustomerId;
@@ -14,7 +15,7 @@ export async function ensureAsaasCustomer(userRepo: UserRepository, user: User):
         name: user.companyName || user.name,
         email: user.email,
         cpfCnpj,
-        phone: user.phone,
+        phone: stripCountryCode(user.phone) || null,
     });
     await userRepo.setAsaasCustomerId(user.id, customer.id);
     return customer.id;
