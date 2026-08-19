@@ -83,6 +83,19 @@ model User {
   asaasCustomerId String?
   billingBlocked  Boolean @default(false)
 
+  // Aceite do contrato de contratação paga da plataforma — pedido ao usuário quando o mês
+  // gratuito termina (ver domain/billing.ts#trialEnded). Enquanto false (nunca respondeu ou
+  // recusou), o job de billing não gera fatura para este usuário e requireActiveBilling
+  // bloqueia o acesso operacional até o aceite. contractAcceptedAt é só para auditoria (quando
+  // aceitou pela última vez); a flag booleana é a que efetivamente controla o acesso.
+  contractAccepted   Boolean   @default(false)
+  contractAcceptedAt DateTime?
+
+  // Setado pelo admin (painel admin) para usuários que não devem ser cobrados — ex.:
+  // funcionários do próprio dono da conta. Isenta tanto da exigência de aceite de contrato
+  // quanto da geração de fatura/boleto (ver findBillableBeforeMonth).
+  billingExempt Boolean @default(false)
+
   sessions Session[]
   accounts Account[]
 

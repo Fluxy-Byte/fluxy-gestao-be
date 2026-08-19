@@ -65,7 +65,14 @@ export const userRepository: UserRepository = {
     },
 
     findBillableBeforeMonth(monthStart) {
-        return prisma.user.findMany({ where: { role: { not: "admin" }, createdAt: { lt: monthStart } } });
+        return prisma.user.findMany({
+            where: {
+                role: { not: "admin" },
+                createdAt: { lt: monthStart },
+                billingExempt: false,
+                contractAccepted: true,
+            },
+        });
     },
 
     async setAsaasCustomerId(id, asaasCustomerId) {
@@ -74,5 +81,16 @@ export const userRepository: UserRepository = {
 
     async setBillingBlocked(id, blocked) {
         await prisma.user.update({ where: { id }, data: { billingBlocked: blocked } });
+    },
+
+    setContractAcceptance(id, accepted) {
+        return prisma.user.update({
+            where: { id },
+            data: { contractAccepted: accepted, contractAcceptedAt: accepted ? new Date() : null },
+        });
+    },
+
+    async setBillingExempt(id, exempt) {
+        await prisma.user.update({ where: { id }, data: { billingExempt: exempt } });
     },
 };

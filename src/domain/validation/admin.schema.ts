@@ -11,3 +11,7 @@ export const auditLogFilterSchema = z.object({
     type: z.enum(["CREATE", "UPDATE", "DELETE", "LOGIN", "LOGOUT", "STATUS_CHANGE", "PAYMENT"]).optional(),
     userId: z.string().optional(),
 });
+
+export const setBillingExemptSchema = z.object({
+    exempt: z.boolean(),
+});

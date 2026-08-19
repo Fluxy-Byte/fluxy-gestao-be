@@ -43,8 +43,12 @@ export interface UserRepository {
     updateBrand(id: string, data: UpdateBrandInput): Promise<User>;
     count(): Promise<number>;
     // Billing — usuários pagantes (role != admin) cadastrados antes do início do mês
-    // corrente, ou seja, que já passaram do primeiro mês gratuito.
+    // corrente (já passaram do primeiro mês gratuito), não isentos pelo admin e que já
+    // confirmaram a contratação da plataforma. Quem ainda não confirmou fica de fora — não
+    // gera fatura, e requireActiveBilling bloqueia o acesso até o aceite.
     findBillableBeforeMonth(monthStart: Date): Promise<User[]>;
     setAsaasCustomerId(id: string, asaasCustomerId: string): Promise<void>;
     setBillingBlocked(id: string, blocked: boolean): Promise<void>;
+    setContractAcceptance(id: string, accepted: boolean): Promise<User>;
+    setBillingExempt(id: string, exempt: boolean): Promise<void>;
 }

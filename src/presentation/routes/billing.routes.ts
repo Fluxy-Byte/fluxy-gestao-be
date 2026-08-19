@@ -6,3 +6,4 @@ export const billingRoutes = Router();
 
 billingRoutes.get("/invoices", asyncHandler(billingController.list));
 billingRoutes.post("/invoices/:id/regenerate", asyncHandler(billingController.regenerate));
+billingRoutes.post("/contract", asyncHandler(billingController.setContractAcceptance));

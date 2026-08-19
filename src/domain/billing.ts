@@ -13,6 +13,13 @@ export function startOfMonth(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
+// O primeiro mês do usuário na plataforma é gratuito (mesma regra usada por
+// findBillableBeforeMonth): o "teste grátis" termina quando vira o mês seguinte ao do
+// cadastro, não exatamente 30 dias corridos depois.
+export function trialEnded(createdAt: Date, now = new Date()): boolean {
+    return createdAt < startOfMonth(now);
+}
+
 export function lastDayOfMonth(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0);
 }

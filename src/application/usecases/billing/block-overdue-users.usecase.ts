@@ -24,7 +24,7 @@ export async function blockOverdueUsersUsecase(
     for (const [userId, invoice] of byUser) {
         try {
             const user = await userRepo.findById(userId);
-            if (!user || user.billingBlocked) continue;
+            if (!user || user.billingBlocked || user.billingExempt) continue;
 
             await userRepo.setBillingBlocked(userId, true);
             await sendMail(

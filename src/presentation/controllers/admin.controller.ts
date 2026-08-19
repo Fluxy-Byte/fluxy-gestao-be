@@ -4,6 +4,7 @@ import { auditLogRepository } from "../../infrastructure/repositories/audit-log.
 import { getAdminMetricsUsecase } from "../../application/usecases/admin/get-admin-metrics.usecase";
 import { getAuditLogUsecase } from "../../application/usecases/admin/get-audit-log.usecase";
 import { listOverdueUsersUsecase } from "../../application/usecases/admin/list-overdue-users.usecase";
+import { setBillingExemptUsecase } from "../../application/usecases/admin/set-billing-exempt.usecase";
 import { invoiceRepository } from "../../infrastructure/repositories/invoice.repository";
 import { serialize } from "../serialize";
 
@@ -21,5 +22,10 @@ export const adminController = {
     async overdueUsers(_req: Request, res: Response) {
         const users = await listOverdueUsersUsecase(invoiceRepository);
         res.json(serialize(users));
+    },
+
+    async setBillingExempt(req: Request, res: Response) {
+        await setBillingExemptUsecase(userRepository, auditLogRepository, req.params.userId as string, req.body);
+        res.json({ ok: true });
     },
 };

@@ -68,6 +68,14 @@ export const auth = betterAuth({
             // Set only by the daily billing job (invoice overdue) / cleared when payment
             // is confirmed. Not client-settable.
             billingBlocked: { type: "boolean", required: false, defaultValue: false, input: false },
+            // Aceite do contrato pago da plataforma, pedido ao fim do mês gratuito — só
+            // alterado via POST /api/billing/contract (setContractAcceptanceUsecase), nunca
+            // pelo update-user genérico do better-auth.
+            contractAccepted: { type: "boolean", required: false, defaultValue: false, input: false },
+            contractAcceptedAt: { type: "date", required: false, input: false },
+            // Isenção de cobrança definida pelo admin (ex.: funcionários). Só alterado via
+            // PATCH /api/admin/users/:userId/billing-exempt (setBillingExemptUsecase).
+            billingExempt: { type: "boolean", required: false, defaultValue: false, input: false },
         },
     },
     plugins: [admin()],
