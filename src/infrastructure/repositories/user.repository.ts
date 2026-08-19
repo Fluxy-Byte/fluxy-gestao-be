@@ -16,17 +16,27 @@ function normalizePhone(phone: string): string {
     return digits;
 }
 
+// Telefone é sempre gravado como somente dígitos + DDI 55 na frente (ver
+// normalizePhoneForStorage) — a partir do alvo canônico (DDD + 8 dígitos)
+// reconstrói as duas formas que podem estar no banco (com e sem o 9º dígito
+// do celular) pra buscar por igualdade exata em vez de varrer a tabela.
+function phoneStorageVariants(target: string): string[] {
+    if (target.length !== 10) return [target];
+    const ddd = target.slice(0, 2);
+    const local = target.slice(2);
+    return [`55${ddd}${local}`, `55${ddd}9${local}`];
+}
+
 export const userRepository: UserRepository = {
     findById(id) {
         return prisma.user.findUnique({ where: { id } });
     },
 
-    async findByPhone(phone) {
+    findByPhone(phone) {
         const target = normalizePhone(phone);
-        if (!target) return null;
+        if (!target) return Promise.resolve(null);
 
-        const candidates = await prisma.user.findMany({ where: { phone: { not: null } } });
-        return candidates.find((u) => normalizePhone(u.phone as string) === target) ?? null;
+        return prisma.user.findFirst({ where: { phone: { in: phoneStorageVariants(target) } } });
     },
 
     updateProfile(id, data) {
